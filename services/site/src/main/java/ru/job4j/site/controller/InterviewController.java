@@ -9,11 +9,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import ru.job4j.site.domain.StatusInterview;
 import ru.job4j.site.dto.InterviewDTO;
+import ru.job4j.site.dto.ProfileDTO;
 import ru.job4j.site.dto.UserInfoDTO;
-import ru.job4j.site.service.AuthService;
-import ru.job4j.site.service.InterviewService;
-import ru.job4j.site.service.TopicsService;
-import ru.job4j.site.service.WisherService;
+import ru.job4j.site.service.*;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -29,6 +27,7 @@ public class InterviewController {
     private final TopicsService topicsService;
     private final InterviewService interviewService;
     private final WisherService wisherService;
+    private final ProfilesService profilesService;
 
     @GetMapping("/createForm")
     public String createForm(@ModelAttribute("topicId") int topicId,
@@ -73,10 +72,12 @@ public class InterviewController {
         var wishers = wisherService.getAllWisherDtoByInterviewId(token, String.valueOf(interview.getId()));
         var isWisher = wisherService.isWisher(userInfo.getId(), interview.getId(), wishers);
         var statisticMap = wisherService.getInterviewStatistic(wishers);
+        var author = profilesService.getProfileById(interview.getSubmitterId()).orElse(new ProfileDTO());
         model.addAttribute("interview", interview);
         model.addAttribute("isAuthor", isAuthor);
         model.addAttribute("isWisher", isWisher);
         model.addAttribute("statisticMap", statisticMap);
+        model.addAttribute("author", author);
         model.addAttribute("statuses", StatusInterview.values());
         model.addAttribute("STATUS_IN_PROGRESS_ID", StatusInterview.IN_PROGRESS.getId());
         model.addAttribute("STATUS_IS_FEEDBACK_ID", StatusInterview.IS_FEEDBACK.getId());

@@ -5,10 +5,13 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import ru.job4j.site.dto.InterviewDTO;
 import ru.job4j.site.dto.ProfileDTO;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * CheckDev пробное собеседование
@@ -49,5 +52,21 @@ public class ProfilesService {
                 .doGetReqParamAll(URL_PROFILES)
                 .block();
         return responseEntity.getBody();
+    }
+
+
+    /**
+     * Метод получает из сервиса Auth список профилей
+     * по submitterId из списка InterviewDTO
+     *
+     * @param interviews  список InterviewDTO
+     * @return Set<ProfileDTO>
+     */
+    public Set<ProfileDTO> getAllProfileById(List<InterviewDTO> interviews) {
+        return interviews.stream()
+                .map(x -> getProfileById(x.getSubmitterId()))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .collect(Collectors.toSet());
     }
 }

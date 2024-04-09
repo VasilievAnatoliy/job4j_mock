@@ -49,6 +49,7 @@ public class InterviewsControllerTest {
         var id = 1;
         var profile = new ProfileDTO(id, "username", "experience", 1,
                 Calendar.getInstance(), Calendar.getInstance());
+        Set<ProfileDTO> users = Set.of(profile);
         var userInfo = new UserInfoDTO();
         userInfo.setId(1);
         var breadcrumbs = List.of(
@@ -86,7 +87,7 @@ public class InterviewsControllerTest {
         when(interviewsService.getAll(token, 1, 5)).thenReturn(page);
         when(interviewsService.getByTopicId(filter.getTopicId(), 1, 5)).thenReturn(page);
         when(authService.userInfo(token)).thenReturn(userInfo);
-        when(profilesService.getProfileById(id)).thenReturn(Optional.of(profile));
+        when(profilesService.getAllProfileById(page.toList())).thenReturn(users);
         when(categoriesService.getAll()).thenReturn(categories);
         when(filterService.getByUserId(token, userInfo.getId())).thenReturn(filter);
         when(categoriesService.getNameById(categories, 1)).thenReturn(categories.get(1).getName());
@@ -103,7 +104,7 @@ public class InterviewsControllerTest {
                 .andExpect(model().attribute("current_page", "interviews"))
                 .andExpect(model().attribute("userInfo", userInfo))
                 .andExpect(model().attribute("breadcrumbs", breadcrumbs))
-                .andExpect(model().attribute("users", Set.of(profile)))
+                .andExpect(model().attribute("users", users))
                 .andExpect(model().attribute("categories", categories))
                 .andExpect(model().attribute("categoryName", "category_1"))
                 .andExpect(model().attribute("topicName", "SOME TOPIC NAME"))

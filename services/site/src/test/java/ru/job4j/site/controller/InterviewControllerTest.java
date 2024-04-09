@@ -11,15 +11,9 @@ import ru.job4j.site.SiteSrv;
 import ru.job4j.site.domain.Breadcrumb;
 import ru.job4j.site.domain.StatusInterview;
 import ru.job4j.site.dto.*;
-import ru.job4j.site.service.AuthService;
-import ru.job4j.site.service.InterviewService;
-import ru.job4j.site.service.TopicsService;
-import ru.job4j.site.service.WisherService;
+import ru.job4j.site.service.*;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static org.mockito.Mockito.doThrow;
@@ -43,6 +37,8 @@ public class InterviewControllerTest {
     private AuthService authService;
     @MockBean
     private WisherService wisherService;
+    @MockBean
+    private ProfilesService profilesService;
 
     @Test
     public void whenShowDetails() throws Exception {
@@ -58,6 +54,8 @@ public class InterviewControllerTest {
         interview.setAdditional("Some description");
         interview.setMode(4);
         interview.setTopicId(1);
+        var author = new ProfileDTO(1, "username", "experience", 1,
+                Calendar.getInstance(), Calendar.getInstance());
         List<WisherDto> wisherDtos = new ArrayList<>();
         when(authService.userInfo(token)).thenReturn(userInfo);
         when(interviewService.getById(token, 1)).thenReturn(interview);
@@ -66,6 +64,7 @@ public class InterviewControllerTest {
                 .thenReturn(wisherDtos);
         when(wisherService.getInterviewStatistic(wisherDtos)).thenReturn(new HashMap<>());
         when(wisherService.isWisher(userInfo.getId(), interview.getId(), wisherDtos)).thenReturn(false);
+        when(profilesService.getProfileById(interview.getSubmitterId())).thenReturn(Optional.of(author));
         mockMvc.perform(get("/interview/{id}", interview.getId())
                         .sessionAttr("token", token))
                 .andDo(print())
@@ -75,6 +74,7 @@ public class InterviewControllerTest {
                 .andExpect(model().attribute("isAuthor", false))
                 .andExpect(model().attribute("isWisher", false))
                 .andExpect(model().attribute("statisticMap", new HashMap<>()))
+                .andExpect(model().attribute("author", author))
                 .andExpect(model().attribute("statuses", StatusInterview.values()))
                 .andExpect(model().attribute("STATUS_IN_PROGRESS_ID", StatusInterview.IN_PROGRESS.getId()))
                 .andExpect(model().attribute("STATUS_IS_FEEDBACK_ID", StatusInterview.IS_FEEDBACK.getId()))
@@ -261,15 +261,15 @@ public class InterviewControllerTest {
         interview.setSubmitterId(14375842);
         interview.setTitle("Some title");
         var wishers = IntStream.range(1, 3).mapToObj(i -> {
-                    var wisher = new WisherDto();
-                    wisher.setId(i);
-                    wisher.setInterviewId(interviewId);
-                    wisher.setUserId(userId + i);
-                    wisher.setContactBy(String.format("user_%d@mail.cd", i));
-                    wisher.setApprove(i % 2 == 0);
-                    wisher.setStatus(1);
-                    return wisher;
-                }).toList();
+            var wisher = new WisherDto();
+            wisher.setId(i);
+            wisher.setInterviewId(interviewId);
+            wisher.setUserId(userId + i);
+            wisher.setContactBy(String.format("user_%d@mail.cd", i));
+            wisher.setApprove(i % 2 == 0);
+            wisher.setStatus(1);
+            return wisher;
+        }).toList();
         var interviewStatistics = new HashMap<Integer, InterviewStatistic>();
         IntStream.range(1, 3).forEach(i ->
                 interviewStatistics.put(i, new InterviewStatistic(i + 1, i, i - 1)));
