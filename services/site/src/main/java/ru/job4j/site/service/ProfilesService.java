@@ -8,9 +8,7 @@ import org.springframework.stereotype.Service;
 import ru.job4j.site.dto.InterviewDTO;
 import ru.job4j.site.dto.ProfileDTO;
 
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -59,14 +57,19 @@ public class ProfilesService {
      * Метод получает из сервиса Auth список профилей
      * по submitterId из списка InterviewDTO
      *
-     * @param interviews  список InterviewDTO
-     * @return Set<ProfileDTO>
+     * @param interviews список InterviewDTO
+     * @return Set < ProfileDTO>
      */
     public Set<ProfileDTO> getAllProfileById(List<InterviewDTO> interviews) {
-        return interviews.stream()
-                .map(x -> getProfileById(x.getSubmitterId()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .collect(Collectors.toSet());
+       var uri = URL_PROFILES + "ids";
+        return new HashSet<>(Objects.requireNonNull(webClientAuthCall
+                .doGetAllProfileById(
+                        uri,
+                        interviews.stream()
+                                .map(InterviewDTO::getSubmitterId)
+                                .collect(Collectors.toSet())
+                )
+                .block()
+                .getBody()));
     }
 }
