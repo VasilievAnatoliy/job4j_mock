@@ -103,25 +103,27 @@ public class WebClientAuthCall {
                 .doOnError(err -> log.error("API not found: {}", err.getMessage()));
     }
 
-    /**
-     * Получает все профили пользователей по множеству id, из сервиса AUTH.
-     *
-     * @param url String URL API
-     * @param ids ids пользователей
-     * @return Mono < ResponseEntity < List < ProfileDTO>>>
-     */
-    public Mono<ResponseEntity<List<ProfileDTO>>> doGetAllProfileById(String url, Set<Integer> ids) {
-        return webClient
-                .get()
-                .uri(urlBuilder -> urlBuilder
-                        .path(url)
-                        .queryParam("ids", ids)
-                        .build())
-                .accept(MediaType.APPLICATION_JSON)
-                .retrieve()
-                .toEntityList(ProfileDTO.class)
-                .doOnError(err -> log.error("API not found: {}", err.getMessage()));
-    }
+        /**
+         * Получает все профили пользователей по множеству id, из сервиса AUTH.
+         * Вместо @GetMapping используется @PostMapping
+         * для передачи коллекции в тело запроса.
+         *
+         * @param url String URL API
+         * @param ids ids пользователей
+         * @return Mono < ResponseEntity < List < ProfileDTO>>>
+         */
+        public Mono<ResponseEntity<List<ProfileDTO>>> doGetAllProfileById(String url, Set<Integer> ids) {
+            return webClient
+                    .post()
+                    .uri(urlBuilder -> urlBuilder
+                            .path(url)
+                            .build())
+                    .accept(MediaType.APPLICATION_JSON)
+                    .bodyValue(ids)
+                    .retrieve()
+                    .toEntityList(ProfileDTO.class)
+                    .doOnError(err -> log.error("API not found: {}", err.getMessage()));
+        }
 
     /**
      * Метод обрабатывает запрос get получения изображения из сервиса Auth

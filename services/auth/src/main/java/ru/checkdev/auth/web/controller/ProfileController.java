@@ -58,12 +58,14 @@ public class ProfileController {
     /**
      * Отправляет все профили пользователей
      * найденных по полученному множеству id.
+     * Вместо @GetMapping используется @PostMapping
+     * для передачи коллекции в тело запроса
      *
      * @param ids Profile ids (List или Set)
      * @return ResponseEntity < List< ProfileDTO>>
      */
-    @GetMapping("/ids")
-    public ResponseEntity<List<ProfileDTO>> findAllById(@RequestParam Set<Integer> ids) {
+    @PostMapping("/ids")
+    public ResponseEntity<List<ProfileDTO>> findAllById(@RequestBody Set<Integer> ids) {
         var profiles = profileService.findAllById(ids);
         return new ResponseEntity<>(
                 profiles,
