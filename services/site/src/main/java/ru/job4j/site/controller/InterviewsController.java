@@ -16,9 +16,7 @@ import ru.job4j.site.service.*;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static ru.job4j.site.controller.RequestResponseTools.getToken;
 
@@ -76,11 +74,7 @@ public class InterviewsController {
             } else {
                 interviewsPage = interviewsService.getAll(token, page, size);
             }
-            Set<ProfileDTO> userList = interviewsPage.toList().stream()
-                    .map(x -> profilesService.getProfileById(x.getSubmitterId()))
-                    .filter(Optional::isPresent)
-                    .map(Optional::get)
-                    .collect(Collectors.toSet());
+            Set<ProfileDTO> userList = profilesService.getAllProfileById(interviewsPage.toList());
             var wishers = wisherService.getAllWisherDtoByInterviewId(token, "");
             var interviewStatistic = wisherService.getInterviewStatistic(wishers);
             RequestResponseTools.addAttrBreadcrumbs(model,

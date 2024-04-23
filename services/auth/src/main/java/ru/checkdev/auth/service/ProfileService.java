@@ -8,6 +8,7 @@ import ru.checkdev.auth.repository.PersonRepository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * CheckDev пробное собеседование
@@ -40,5 +41,16 @@ public class ProfileService {
      */
     public List<ProfileDTO> findProfilesOrderByCreatedDesc() {
         return personRepository.findProfileOrderByCreatedDesc();
+    }
+
+    /**
+     * Получить список всех ProfileDTO по множеству id
+     *
+     * @param ids Set < Integer> Profile ids
+     * @return List < ProfileDTO>
+     */
+
+    public List<ProfileDTO> findAllById(Set<Integer> ids) {
+        return personRepository.findAllById(ids);
     }
 }
