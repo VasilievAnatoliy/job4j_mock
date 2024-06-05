@@ -55,6 +55,12 @@ public class InterviewService {
         return interviewRepository.findById(id);
     }
 
+    public Page<Interview> findByStatus(int status, int page, int size) {
+        return interviewRepository.findByStatus(status,
+                PageRequest.of(page, size, Sort.by("createDate").descending())
+        );
+    }
+
     public List<Interview> findByMode(int mode) {
         return interviewRepository.findByMode(mode).stream()
                 .peek(interview -> {

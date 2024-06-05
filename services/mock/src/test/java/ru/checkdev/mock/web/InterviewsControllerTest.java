@@ -23,12 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.mockito.Mockito.when;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = MockSrv.class)
@@ -57,6 +56,24 @@ class InterviewsControllerTest {
 
     private String string = new GsonBuilder().serializeNulls().create().toJson(interview);
 
+    private List<Interview> getInterviews() {
+        List<Interview> interviews = new ArrayList<>();
+        IntStream.range(1, 8).forEach(i -> {
+            var interview = Interview.of()
+                    .id(i)
+                    .mode(2)
+                    .submitterId(3)
+                    .title(String.format("interview_%d", i))
+                    .additional("test_additional")
+                    .contactBy("test_contact_by")
+                    .approximateDate("test_approximate_date")
+                    .createDate(null)
+                    .build();
+            interviews.add(interview);
+        });
+        return interviews;
+    }
+
     @Test
     @WithMockUser
     public void whenGetAll() throws Exception {
@@ -73,21 +90,23 @@ class InterviewsControllerTest {
 
     @Test
     @WithMockUser
+    public void whenFindByStatus() throws Exception {
+        List<Interview> interviews = getInterviews();
+        var page = new PageImpl<>(interviews);
+        when(interviewRepository.findByStatus(1, PageRequest.of(0, 5)))
+                .thenReturn(page);
+        when(service.findByStatus(Mockito.anyInt(), Mockito.anyInt(), Mockito.anyInt()))
+                .thenReturn(page);
+        mockMvc.perform(get("/interviews/findByStatus/1"))
+                .andDo(print())
+                .andExpectAll(status().isOk(),
+                        content().contentType(MediaType.APPLICATION_JSON));
+    }
+
+    @Test
+    @WithMockUser
     public void whenFindByTopicsIds() throws Exception {
-        List<Interview> interviews = new ArrayList<>();
-        IntStream.range(1, 8).forEach(i -> {
-            var interview = Interview.of()
-                    .id(i)
-                    .mode(2)
-                    .submitterId(3)
-                    .title(String.format("interview_%d", i))
-                    .additional("test_additional")
-                    .contactBy("test_contact_by")
-                    .approximateDate("test_approximate_date")
-                    .createDate(null)
-                    .build();
-            interviews.add(interview);
-        });
+        List<Interview> interviews = getInterviews();
         var page = new PageImpl<>(interviews);
         when(interviewRepository.findByTopicIdIn(List.of(1, 2, 3), PageRequest.of(0, 5)))
                 .thenReturn(page);

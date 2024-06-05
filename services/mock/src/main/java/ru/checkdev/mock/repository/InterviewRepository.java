@@ -16,6 +16,7 @@ import java.util.Optional;
 public interface InterviewRepository extends JpaRepository<Interview, Integer> {
 
     Optional<Interview> findById(int id);
+    Page<Interview> findByStatus(int status, Pageable pageable);
 
     List<Interview> findByMode(int mode);
 

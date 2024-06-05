@@ -32,6 +32,16 @@ public class InterviewsController {
                 .body(interviewService.findPaging(page, size));
     }
 
+    @GetMapping("/findByStatus/{status}")
+    public ResponseEntity<Page<Interview>> findByStatus(
+            @PathVariable int status,
+            @RequestParam(required = false, defaultValue = "0") int page,
+            @RequestParam(required = false, defaultValue = "20") int size) {
+        return ResponseEntity
+                .status(HttpStatus.OK)
+                .body(interviewService.findByStatus(status, page, size));
+    }
+
     @GetMapping("/{mode}")
     public ResponseEntity<List<Interview>> findByMode(@PathVariable int mode) {
         return ResponseEntity

@@ -7,6 +7,7 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.test.context.junit4.SpringRunner;
 import ru.checkdev.mock.domain.Interview;
 
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -218,5 +219,72 @@ class InterviewRepositoryTest {
         Assertions.assertEquals(secondEvenPage.toList(), secondPageList);
         Assertions.assertEquals(evenPage.toList().size(), 3);
         Assertions.assertEquals(evenPage.toList(), thirdPageList);
+    }
+
+    @Test
+    void whenFindByDifferentStatuses() {
+        entityManager.createQuery("delete from interview").executeUpdate();
+        List<Interview> oddStatusIdsInterviewList = new ArrayList<>();
+        List<Interview> evenStatusIdsInterviewList = new ArrayList<>();
+        IntStream.rangeClosed(1, 9).forEach(i -> {
+            var interview = new Interview();
+            interview.setMode(1);
+            interview.setSubmitterId(1);
+            interview.setTitle(String.format("Interview_%d", i));
+            interview.setAdditional(String.format("Some text_%d", i));
+            interview.setContactBy("Some contact");
+            interview.setApproximateDate("30.02.2024");
+            interview.setCreateDate(new Timestamp(System.currentTimeMillis()));
+            interview.setTopicId(1);
+            entityManager.persist(interview);
+            if (i % 2 == 0) {
+                interview.setStatus(2);
+                evenStatusIdsInterviewList.add(interview);
+            } else {
+                interview.setStatus(1);
+                oddStatusIdsInterviewList.add(interview);
+            }
+        });
+        assertThat(oddStatusIdsInterviewList).hasSize(5);
+        assertThat(evenStatusIdsInterviewList).hasSize(4);
+
+        List<Interview> status1Interviews = interviewRepository
+                .findByStatus(1, PageRequest.of(0, 5)).toList();
+        List<Interview> status2Interviews = interviewRepository
+                .findByStatus(2, PageRequest.of(0, 5)).toList();
+
+        assertThat(status1Interviews).allMatch(interview -> interview.getStatus() == 1);
+        assertThat(status2Interviews).allMatch(interview -> interview.getStatus() == 2);
+        assertThat(oddStatusIdsInterviewList).isEqualTo(status1Interviews);
+        assertThat(evenStatusIdsInterviewList).isEqualTo(status2Interviews);
+    }
+
+
+    @Test
+    public void whenFindByStatusWithPagination() {
+        entityManager.createQuery("delete from interview").executeUpdate();
+        IntStream.range(0, 10).forEach(i -> {
+            var interview = new Interview();
+            interview.setTitle("Interview");
+            interview.setContactBy("Some contact");
+            interview.setApproximateDate("30.02.2024");
+            interview.setTopicId(1);
+            interview.setStatus(1);
+            interview.setCreateDate(new Timestamp(System.currentTimeMillis() - i * 100_000L));
+            entityManager.persist(interview);
+        });
+        Sort sort = Sort.by("createDate").descending();
+        List<Interview> firstPage =
+                interviewRepository.findByStatus(1, PageRequest.of(0, 5, sort)).toList();
+        List<Interview> secondPage =
+                interviewRepository.findByStatus(1, PageRequest.of(1, 5, sort)).toList();
+
+        assertThat(firstPage).hasSize(5);
+        assertThat(secondPage).hasSize(5);
+        assertThat(firstPage).isSortedAccordingTo((i1, i2) -> i2.getCreateDate()
+                .compareTo(i1.getCreateDate()));
+        assertThat(secondPage).isSortedAccordingTo((i1, i2) -> i2.getCreateDate()
+                .compareTo(i1.getCreateDate()));
+
     }
 }

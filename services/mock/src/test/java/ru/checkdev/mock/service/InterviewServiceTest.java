@@ -22,11 +22,11 @@ import java.util.Optional;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.in;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest(classes = MockSrv.class)
 @RunWith(SpringRunner.class)
@@ -146,12 +146,10 @@ class InterviewServiceTest {
         assertThat(actual).isTrue();
     }
 
-    @Test
-    public void whenGetByTopicsIds() {
-        List<Interview> oddTopicIdsInterviewList = new ArrayList<>();
-        List<Interview> evenTopicIdsInterviewList = new ArrayList<>();
-        IntStream.range(0, 8).forEach(i -> {
+    private void getInterview(List<Interview> oddInterviewList, List<Interview> evenInterviewList) {
+        IntStream.rangeClosed(1, 8).forEach(i -> {
             var interview = new Interview();
+            interview.setId(i);
             interview.setMode(1);
             interview.setSubmitterId(1);
             interview.setTitle(String.format("Interview_%d", i));
@@ -159,13 +157,39 @@ class InterviewServiceTest {
             interview.setContactBy("Some contact");
             interview.setApproximateDate("30.02.2024");
             interview.setCreateDate(new Timestamp(System.currentTimeMillis()));
-            interview.setTopicId(i + 1);
+            interview.setTopicId(i);
             if (interview.getTopicId() % 2 == 0) {
-                evenTopicIdsInterviewList.add(interview);
+                interview.setStatus(2);
+                evenInterviewList.add(interview);
             } else {
-                oddTopicIdsInterviewList.add(interview);
+                interview.setStatus(1);
+                oddInterviewList.add(interview);
             }
         });
+    }
+
+    @Test
+    public void whenGetByStatus() {
+        List<Interview> statusOneInterviewList = new ArrayList<>();
+        List<Interview> statusTwoInterviewList = new ArrayList<>();
+        getInterview(statusOneInterviewList, statusTwoInterviewList);
+        var statusTwo = new PageImpl<>(statusTwoInterviewList);
+        var statusOne = new PageImpl<>(statusOneInterviewList);
+        when(interviewRepository.findByStatus(2,
+                PageRequest.of(0, 5, Sort.by("createDate").descending())))
+                .thenReturn(statusTwo);
+        when(interviewRepository.findByStatus(1,
+                PageRequest.of(0, 5, Sort.by("createDate").descending())))
+                .thenReturn(statusOne);
+        assertThat(interviewService.findByStatus(2, 0, 5), is(statusTwo));
+        assertThat(interviewService.findByStatus(1, 0, 5), is(statusOne));
+    }
+
+    @Test
+    public void whenGetByTopicsIds() {
+        List<Interview> oddTopicIdsInterviewList = new ArrayList<>();
+        List<Interview> evenTopicIdsInterviewList = new ArrayList<>();
+        getInterview(oddTopicIdsInterviewList, evenTopicIdsInterviewList);
         var evenPage = new PageImpl<>(evenTopicIdsInterviewList);
         var oddPage = new PageImpl<>(oddTopicIdsInterviewList);
         when(interviewRepository.findByTopicIdIn(List.of(2, 4, 6), PageRequest.of(0, 5)))

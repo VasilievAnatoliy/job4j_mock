@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import ru.job4j.site.dto.InterviewDTO;
 import ru.job4j.site.util.RestPageImpl;
 
-import java.util.Collection;
 import java.util.List;
 
 @Service
@@ -27,7 +26,19 @@ public class InterviewsService {
         return mapper.readValue(text, pageType);
     }
 
-    public List<InterviewDTO> getByType(int type) throws JsonProcessingException {
+    public Page<InterviewDTO> getByStatus(int status, int page, int size)
+            throws JsonProcessingException {
+        var text = new RestAuthCall(String
+                .format("http://localhost:9912/interviews/findByStatus/%d?page=%d&size=%d",
+                        status, page, size)).get();
+        var mapper = new ObjectMapper();
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        var pageType = mapper.getTypeFactory()
+                .constructParametricType(RestPageImpl.class, InterviewDTO.class);
+        return mapper.readValue(text, pageType);
+    }
+
+        public List<InterviewDTO> getByType(int type) throws JsonProcessingException {
         var text = new RestAuthCall(String.format("http://localhost:9912/interviews/%d", type))
                 .get();
         var mapper = new ObjectMapper();
