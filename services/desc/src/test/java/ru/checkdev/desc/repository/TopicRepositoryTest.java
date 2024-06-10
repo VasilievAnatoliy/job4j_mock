@@ -14,6 +14,8 @@ import ru.checkdev.desc.domain.Topic;
 
 import javax.persistence.EntityManager;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -157,5 +159,40 @@ class TopicRepositoryTest {
         var topicInDb = topicRepository.findById(topic1.getId());
         assertThat(topicInDb).isNotEmpty();
         assertThat(topicInDb.get().getTotal()).isEqualTo(expectTotalSize5);
+    }
+
+    @Test
+    void whenCountTopicsByCategoryIdsThenReturnCorrectCounts() {
+        var topic1 = new Topic();
+        topic1.setName("topic1");
+        topic1.setCategory(category1);
+        topic1.setPosition(55);
+
+        var topic2 = new Topic();
+        topic2.setName("topic2");
+        topic2.setCategory(category1);
+        topic2.setPosition(10);
+
+        var topic3 = new Topic();
+        topic3.setName("topic3");
+        topic3.setCategory(category2);
+        topic3.setPosition(15);
+
+        entityManager.persist(topic1);
+        entityManager.persist(topic2);
+        entityManager.persist(topic3);
+        entityManager.clear();
+
+        var categoryIds = List.of(category1.getId(), category2.getId());
+        var results = topicRepository.countTopicsByCategoryIds(categoryIds);
+
+        Map<Integer, Integer> counts = results.stream().collect(Collectors.toMap(
+                result -> (Integer) result[0],
+                result -> ((Long) result[1]).intValue()
+        ));
+
+        assertThat(counts).hasSize(2);
+        assertThat(counts.get(category1.getId())).isEqualTo(2);
+        assertThat(counts.get(category2.getId())).isEqualTo(1);
     }
 }

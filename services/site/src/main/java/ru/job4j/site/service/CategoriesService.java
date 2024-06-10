@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import ru.job4j.site.dto.CategoryDTO;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @AllArgsConstructor
 @Service
@@ -61,8 +62,12 @@ public class CategoriesService {
 
     public List<CategoryDTO> getMostPopular() throws JsonProcessingException {
         var categoriesDTO = getPopularFromDesc();
+        var categoryIds = categoriesDTO.stream()
+                .map(CategoryDTO::getId)
+                .collect(Collectors.toList());
+        var topicsCountMap = topicsService.getTopicsCountForCategories(categoryIds);
         for (var categoryDTO : categoriesDTO) {
-            categoryDTO.setTopicsSize(topicsService.getByCategory(categoryDTO.getId()).size());
+            categoryDTO.setTopicsSize(topicsCountMap.getOrDefault(categoryDTO.getId(), 0));
         }
         return categoriesDTO;
     }

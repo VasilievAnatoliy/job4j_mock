@@ -6,10 +6,8 @@ import ru.checkdev.desc.domain.Topic;
 import ru.checkdev.desc.dto.TopicDTO;
 import ru.checkdev.desc.repository.TopicRepository;
 
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
@@ -64,5 +62,13 @@ public class TopicService {
             result.add(new TopicDTO(topic.getId(), topic.getName()));
         }
         return result;
+    }
+
+    public Map<Integer, Integer> getTopicsCountForCategories(List<Integer> categoryIds) {
+        List<Object[]> results = topicRepository.countTopicsByCategoryIds(categoryIds);
+        return results.stream().collect(Collectors.toMap(
+                result -> (Integer) result[0],
+                result -> ((Long) result[1]).intValue()
+        ));
     }
 }

@@ -23,4 +23,7 @@ public interface TopicRepository extends CrudRepository<Topic, Integer> {
 
     @Query("SELECT t.name FROM cd_topic t WHERE t.id = :id")
     Optional<String> getNameById(@Param("id") int id);
+
+    @Query("SELECT t.category.id, COUNT(t) FROM cd_topic t WHERE t.category.id IN :categoryIds GROUP BY t.category.id")
+    List<Object[]> countTopicsByCategoryIds(@Param("categoryIds") List<Integer> categoryIds);
 }

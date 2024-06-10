@@ -11,12 +11,25 @@ import ru.job4j.site.dto.TopicIdNameDTO;
 
 import java.util.Calendar;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class TopicsService {
 
     public List<TopicDTO> getByCategory(int id) throws JsonProcessingException {
         var text = new RestAuthCall("http://localhost:9902/topics/" + id).get();
+        var mapper = new ObjectMapper();
+        return mapper.readValue(text, new TypeReference<>() {
+        });
+    }
+
+    public Map<Integer, Integer> getTopicsCountForCategories(List<Integer> categoryIds)
+            throws JsonProcessingException {
+        var ids = categoryIds.stream()
+                .map(String::valueOf)
+                .collect(Collectors.joining(","));
+        var text = new RestAuthCall("http://localhost:9902/topics/count?ids=" + ids).get();
         var mapper = new ObjectMapper();
         return mapper.readValue(text, new TypeReference<>() {
         });
